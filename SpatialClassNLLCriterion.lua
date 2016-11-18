@@ -1,7 +1,7 @@
 local THNN = require 'nn.THNN'
 local SpatialClassNLLCriterion, parent = torch.class('nn.SpatialClassNLLCriterion', 'nn.Criterion')
 
-function SpatialClassNLLCriterion:__init(weights, sizeAverage)
+function SpatialClassNLLCriterion:__init(weights, sizeAverage, ignored_label)
     parent.__init(self)
     if sizeAverage ~= nil then
        self.sizeAverage = sizeAverage
@@ -16,6 +16,7 @@ function SpatialClassNLLCriterion:__init(weights, sizeAverage)
     self.output_tensor = torch.zeros(1)
     self.total_weight_tensor = torch.ones(1)
     self.target = torch.zeros(1):long()
+    self.ignored_label = ignored_label ~= nil and ignored_label or -1
 end
 
 function SpatialClassNLLCriterion:__len()
@@ -46,7 +47,8 @@ function SpatialClassNLLCriterion:updateOutput(input, target)
       self.output_tensor:cdata(),
       self.sizeAverage,
       THNN.optionalTensor(self.weights),
-      self.total_weight_tensor:cdata()
+      self.total_weight_tensor:cdata(),
+      self.ignored_label
    )
    self.output = self.output_tensor[1]
    return self.output, self.total_weight_tensor[1]
@@ -74,7 +76,8 @@ function SpatialClassNLLCriterion:updateGradInput(input, target)
       self.gradInput:cdata(),
       self.sizeAverage,
       THNN.optionalTensor(self.weights),
-      self.total_weight_tensor:cdata()
+      self.total_weight_tensor:cdata(),
+      self.ignored_label
    )
 
    return self.gradInput
